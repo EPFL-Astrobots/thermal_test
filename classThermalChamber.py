@@ -24,7 +24,7 @@ class ThermalChamber:
         """
         self.ser.close()
 
-    def set_temp_setpoint(self, temp_value: float):
+    def set_temperature(self, temp_value: float):
         """
         Input: 
 
@@ -60,6 +60,15 @@ class ThermalChamber:
         print(f"Response: {repr(response)}")
 
 if __name__ == '__main__':
+    #%%
     from classThermalChamber import ThermalChamber
     PORT = 'COM5'
     thermal = ThermalChamber(PORT)
+    #%%
+    temp_value = 3
+    thermal.set_temperature(temp_value)
+
+    #%%
+    thermal.turn_off_chamber()
+    #%%
+    thermal.close_com()
