@@ -8,8 +8,8 @@ from collections import deque
 
 # Config
 ROLLING_WINDOW_SECONDS = 300  # Show only last 5 minutes
-PORT = 'COM3'
-NOW_TIME = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+PORT = 'COM5'
+NOW_TIME = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 LOG_FILE = NOW_TIME + 'chamber_log.csv'
 MAX_POINTS = 100  # max points in graph
 start_time = time.time()

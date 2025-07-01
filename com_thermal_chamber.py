@@ -10,7 +10,7 @@ ser = serial.Serial(
 )
 # 
 
-ser.write(b'$'+ b'00I'+b'\r')  # Command to read temperature
+ser.write(b'$00I\r')  # Command to read temperature
 response = ser.readline()
 fields = response.decode(errors='ignore').strip().split(' ')
 # print('Response:', response.decode(errors='ignore').strip().split(','))
