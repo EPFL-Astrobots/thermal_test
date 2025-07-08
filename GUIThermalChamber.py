@@ -4,13 +4,24 @@ import time
 import datetime
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QVBoxLayout,
-    QHBoxLayout, QLabel, QLineEdit, QMessageBox, QComboBox
+    QHBoxLayout, QLabel, QLineEdit, QMessageBox, QComboBox, QTextEdit
 )
 from PyQt5.QtCore import QTimer
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from classThermalChamber import ThermalChamber
 import serial.tools.list_ports
+
+
+class EmittingStream:
+    def __init__(self, text_edit):
+        self.text_edit = text_edit
+
+    def write(self, text):
+        self.text_edit.append(text)
+
+    def flush(self):
+        pass
 
 
 class ChamberGUI(QWidget):
@@ -20,6 +31,7 @@ class ChamberGUI(QWidget):
         self.chamber = None
         self.csv_file = None
         self.csv_writer = None
+        self.csv_filename = None
         self.timer = QTimer()
         self.timer.timeout.connect(self.poll_chamber)
 
@@ -27,8 +39,13 @@ class ChamberGUI(QWidget):
         self.temp_setpoints = []
         self.temp_actuals = []
         self.start_time = time.time()
+        self.moving_window = 1800
 
         self.init_ui()
+
+        # Redirect print output to QTextEdit
+        sys.stdout = EmittingStream(self.log_output)
+        sys.stderr = EmittingStream(self.log_output)
 
     def init_ui(self):
         layout = QVBoxLayout()
@@ -66,8 +83,24 @@ class ChamberGUI(QWidget):
         self.ax.set_ylabel("Temperature (°C)")
         self.ax.legend()
         layout.addWidget(self.canvas)
-
         self.setLayout(layout)
+
+        # --- Turn Off Chamber ---
+        turn_off_layout = QHBoxLayout()
+        self.turn_off_btn = QPushButton("Turn Off Chamber")
+        self.turn_off_btn.clicked.connect(self.turn_off_chamber)
+        turn_off_layout.addStretch()
+        turn_off_layout.addWidget(self.turn_off_btn)
+        turn_off_layout.addStretch()
+        layout.addLayout(turn_off_layout)
+
+        # --- Console Output ---
+        self.log_output = QTextEdit()
+        self.log_output.setReadOnly(True)
+        layout.addWidget(QLabel("Console Output:"))
+        layout.addWidget(self.log_output)
+
+        
 
     def refresh_ports(self):
         ports = serial.tools.list_ports.comports()
@@ -84,6 +117,7 @@ class ChamberGUI(QWidget):
             self.chamber = ThermalChamber(port)
             self.start_logging()
             self.timer.start(5000)
+            print("Chamber connected")
         except Exception as e:
             QMessageBox.critical(self, "Connection Failed", str(e))
 
@@ -91,8 +125,19 @@ class ChamberGUI(QWidget):
         if self.chamber:
             self.chamber.close_com()
             self.chamber = None
+            print("Chamber disconnected")
         self.timer.stop()
         self.stop_logging()
+
+    def turn_off_chamber(self):
+        if not self.chamber:
+            QMessageBox.warning(self, "Not Connected", "Connect to the chamber first.")
+            return
+        try:
+            self.chamber.turn_off_chamber()
+            print("🔌 Chamber control turned off.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
 
     def set_temperature(self):
         if not self.chamber:
@@ -108,13 +153,15 @@ class ChamberGUI(QWidget):
 
     def start_logging(self):
         now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.csv_file = open(f"chamber_log_{now}.csv", mode='w', newline='')
+        self.csv_filename = f"{now}_camber_logs.csv"
+        self.csv_file = open(self.csv_filename, mode='w', newline='')
         self.csv_writer = csv.writer(self.csv_file)
         self.csv_writer.writerow(["Wall_Timestamp", "Elapsed_Seconds", "Temp_Setpoint", "Temp_Actual"])
 
     def stop_logging(self):
         if self.csv_file:
             self.csv_file.close()
+            print(f'Chamber logs saved in {self.csv_filename}')
             self.csv_file = None
             self.csv_writer = None
 
@@ -143,7 +190,7 @@ class ChamberGUI(QWidget):
             # Update plot
             self.temp_line.set_data(self.timestamps, self.temp_actuals)
             self.set_line.set_data(self.timestamps, self.temp_setpoints)
-            self.ax.set_xlim(max(0, elapsed - 600), elapsed)
+            self.ax.set_xlim(max(0, elapsed - self.moving_window), elapsed)
             self.ax.set_ylim(
                 min(self.temp_actuals + self.temp_setpoints) - 5,
                 max(self.temp_actuals + self.temp_setpoints) + 5,
@@ -160,12 +207,14 @@ class ChamberGUI(QWidget):
 
     def closeEvent(self, event):
         self.disconnect_chamber()
+        self.stop_logging()  # Safe to call twice
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
         event.accept()
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     gui = ChamberGUI()
-    gui.resize(800, 600)
+    gui.resize(1000, 800)
     gui.show()
     sys.exit(app.exec_())
