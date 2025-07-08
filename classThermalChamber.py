@@ -65,7 +65,7 @@ if __name__ == '__main__':
     PORT = 'COM5'
     thermal = ThermalChamber(PORT)
     #%%
-    temp_value = 3
+    temp_value = 20
     thermal.set_temperature(temp_value)
 
     #%%

@@ -7,7 +7,7 @@ from matplotlib.animation import FuncAnimation
 from collections import deque
 
 # Config
-ROLLING_WINDOW_SECONDS = 300  # Show only last 5 minutes
+ROLLING_WINDOW_SECONDS = 600  # Show only last 10 minutes
 PORT = 'COM5'
 NOW_TIME = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 LOG_FILE = NOW_TIME + 'chamber_log.csv'
@@ -48,8 +48,8 @@ humidity_actual = []
 fig, ax = plt.subplots()
 line_temp = ax.plot([], [], label='Temp Actual (°C)', color='red')[0]
 line_temp_set = ax.plot([], [], label='Temp Setpoint', color='orange', linestyle='dashed')[0]
-line_humidity = ax.plot([], [], label='Humidity Actual (%)', color='blue')[0]
-line_humidity_set = ax.plot([], [], label='Humidity Setpoint', color='green', linestyle='dashed')[0]
+# line_humidity = ax.plot([], [], label='Humidity Actual (%)', color='blue')[0]
+# line_humidity_set = ax.plot([], [], label='Humidity Setpoint', color='green', linestyle='dashed')[0]
 ax.set_xlabel('Time (s since start)')
 ax.set_ylabel('Values')
 ax.legend()
@@ -99,13 +99,15 @@ def update(frame):
             x = list(timestamps)
             line_temp.set_data(x, temp_actual)
             line_temp_set.set_data(x, temp_set)
-            line_humidity.set_data(x, humidity_actual)
-            line_humidity_set.set_data(x, humidity_set)
+            # line_humidity.set_data(x, humidity_actual)
+            # line_humidity_set.set_data(x, humidity_set)
 
             if x:
                 ax.set_xlim(x[0], x[-1])
-                ymin = min(temp_actual + temp_set + humidity_actual + humidity_set) - 5
-                ymax = max(temp_actual + temp_set + humidity_actual + humidity_set) + 5
+                # ymin = min(temp_actual + temp_set + humidity_actual + humidity_set) - 5
+                # ymax = max(temp_actual + temp_set + humidity_actual + humidity_set) + 5
+                ymin = min(temp_actual + temp_set) - 5
+                ymax = max(temp_actual + temp_set) + 5
                 ax.set_ylim(ymin, ymax)
 
             print(f"Time: {now}, Temp Setpoint: {t_set} °C, Temp Actual: {t_act} °C, ")
@@ -113,7 +115,8 @@ def update(frame):
     except Exception as e:
         print(f"Error: {e}")
 
-    return line_temp, line_temp_set, line_humidity, line_humidity_set
+    # return line_temp, line_temp_set, line_humidity, line_humidity_set
+    return line_temp, line_temp_set
 
 ani = FuncAnimation(fig, update, interval=5000)
 plt.tight_layout()
