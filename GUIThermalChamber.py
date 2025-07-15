@@ -39,7 +39,7 @@ class ChamberGUI(QWidget):
         self.temp_setpoints = []
         self.temp_actuals = []
         self.start_time = time.time()
-        self.moving_window = 1800
+        self.moving_window = 7200
 
         self.init_ui()
 
@@ -79,7 +79,7 @@ class ChamberGUI(QWidget):
         self.canvas = FigureCanvas(self.figure)
         self.temp_line, = self.ax.plot([], [], label="Temp Actual", color="red")
         self.set_line, = self.ax.plot([], [], label="Temp Setpoint", color="orange", linestyle="dashed")
-        self.ax.set_xlabel("Time (s)")
+        self.ax.set_xlabel("Ellapsed time since start (s)")
         self.ax.set_ylabel("Temperature (°C)")
         self.ax.legend()
         layout.addWidget(self.canvas)
@@ -215,6 +215,6 @@ class ChamberGUI(QWidget):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     gui = ChamberGUI()
-    gui.resize(1000, 800)
+    gui.resize(800, 600)
     gui.show()
     sys.exit(app.exec_())
