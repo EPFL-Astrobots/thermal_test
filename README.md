@@ -17,6 +17,15 @@ This application supports live plotting, temperature setpoint control, logging, 
 
 ---
 
+## How to use
+
+- Chose the correct COM port if not already selected
+- Click on "Connect" to initiate the chamber communication
+    - The script polls the chamber every 5s
+    - The live plot shows the temperature evolution for the last 2 hours
+- Temperature setpoints range: [-20;40]°C
+- Click on "disconnect" to stop the connection and write the logs in a csv file
+
 ## 📸 Screenshots
 
 ### 🔧 Main Interface
