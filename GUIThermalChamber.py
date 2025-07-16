@@ -41,6 +41,11 @@ class ChamberGUI(QWidget):
         self.start_time = time.time()
         self.moving_window = 7200
 
+        self.scheduled_off_datetime = None
+        self.time_checker = QTimer()
+        self.time_checker.timeout.connect(self.check_turnoff_time)
+        self.time_checker.start(1000)  # check every secon
+
         self.init_ui()
 
         # Redirect print output to QTextEdit
@@ -81,6 +86,7 @@ class ChamberGUI(QWidget):
         self.set_line, = self.ax.plot([], [], label="Temp Setpoint", color="orange", linestyle="dashed")
         self.ax.set_xlabel("Ellapsed time since start (s)")
         self.ax.set_ylabel("Temperature (°C)")
+        self.ax.grid()
         self.ax.legend()
         layout.addWidget(self.canvas)
         self.setLayout(layout)
@@ -99,6 +105,23 @@ class ChamberGUI(QWidget):
         self.log_output.setReadOnly(True)
         layout.addWidget(QLabel("Console Output:"))
         layout.addWidget(self.log_output)
+
+        # --- Scheduled Turn-Off by Duration ---
+        duration_layout = QHBoxLayout()
+        self.duration_input = QLineEdit()
+        self.duration_input.setPlaceholderText("Duration (minutes)")
+        self.schedule_btn = QPushButton("Schedule Turn-Off")
+        self.cancel_timer_btn = QPushButton("Cancel Timer")
+        self.schedule_btn.clicked.connect(self.schedule_turnoff_by_duration)
+        self.cancel_timer_btn.clicked.connect(self.cancel_scheduled_turnoff)
+
+        self.timer_info_label = QLabel("No shutoff scheduled.")
+        duration_layout.addWidget(QLabel("Turn Off In:"))
+        duration_layout.addWidget(self.duration_input)
+        duration_layout.addWidget(self.schedule_btn)
+        duration_layout.addWidget(self.cancel_timer_btn)
+        layout.addLayout(duration_layout)
+        layout.addWidget(self.timer_info_label)
 
         
 
@@ -204,6 +227,37 @@ class ChamberGUI(QWidget):
 
         except Exception as e:
             print("Polling error:", e)
+
+    def schedule_turnoff_by_duration(self):
+        try:
+            minutes = float(self.duration_input.text().strip())
+            if minutes <= 0:
+                raise ValueError
+            self.scheduled_off_datetime = datetime.datetime.now() + datetime.timedelta(minutes=minutes)
+            formatted_time = self.scheduled_off_datetime.strftime("%H:%M:%S")
+            self.timer_info_label.setText(f"⏱ Chamber scheduled to turn off at {formatted_time}")
+            print(f"⏳ Chamber will turn off at {formatted_time} (in {minutes} minutes)")
+        except ValueError:
+            QMessageBox.warning(self, "Invalid Input", "Please enter a valid number of minutes.")
+
+    def check_turnoff_time(self):
+        if self.scheduled_off_datetime and self.chamber:
+            now = datetime.datetime.now()
+            if now >= self.scheduled_off_datetime:
+                print("🛑 Scheduled duration reached. Turning off chamber.")
+                try:
+                    self.chamber.turn_off_chamber()
+                    self.stop_logging()
+                    self.scheduled_off_datetime = None
+                    self.timer_info_label.setText("✅ Chamber turned off and log saved.")
+                    print("💾 Log file saved after scheduled shutdown.")
+                except Exception as e:
+                    print(f"Error during scheduled shutdown: {e}")
+
+    def cancel_scheduled_turnoff(self):
+        self.scheduled_off_datetime = None
+        self.timer_info_label.setText("❌ Shutdown timer cancelled.")
+        print("❌ Shutdown timer cancelled.")
 
     def closeEvent(self, event):
         self.disconnect_chamber()
