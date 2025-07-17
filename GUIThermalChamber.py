@@ -55,18 +55,25 @@ class ChamberGUI(QWidget):
     def init_ui(self):
         layout = QVBoxLayout()
 
-        # --- Port Selection ---
+         # --- Port Selection + Status Light ---
         port_layout = QHBoxLayout()
         self.port_combo = QComboBox()
         self.refresh_ports()
+
         self.connect_btn = QPushButton("Connect")
         self.disconnect_btn = QPushButton("Disconnect")
         self.connect_btn.clicked.connect(self.connect_chamber)
         self.disconnect_btn.clicked.connect(self.disconnect_chamber)
+
+        self.status_light = QLabel()
+        self.status_light.setFixedSize(20, 20)
+        self.status_light.setStyleSheet("border-radius: 10px; background-color: red;")  # 🔴 Default: Disconnected
+
         port_layout.addWidget(QLabel("Port:"))
         port_layout.addWidget(self.port_combo)
         port_layout.addWidget(self.connect_btn)
         port_layout.addWidget(self.disconnect_btn)
+        port_layout.addWidget(self.status_light)  # Add light to layout
         layout.addLayout(port_layout)
 
         # --- Temperature Setpoint ---
@@ -140,6 +147,7 @@ class ChamberGUI(QWidget):
             self.chamber = ThermalChamber(port)
             self.start_logging()
             self.timer.start(5000)
+            self.update_status_light('connected')
             print("Chamber connected")
         except Exception as e:
             QMessageBox.critical(self, "Connection Failed", str(e))
@@ -148,9 +156,22 @@ class ChamberGUI(QWidget):
         if self.chamber:
             self.chamber.close_com()
             self.chamber = None
+            self.update_status_light('disconnected')
             print("Chamber disconnected")
         self.timer.stop()
         self.stop_logging()
+
+    def update_status_light(self, status: str):
+        """
+        status: 'connected', 'disconnected', or 'error'
+        """
+        color_map = {
+            'connected': 'green',
+            'disconnected': 'red',
+            'error': 'yellow'
+        }
+        color = color_map.get(status, 'red')
+        self.status_light.setStyleSheet(f"border-radius: 10px; background-color: {color};")
 
     def turn_off_chamber(self):
         if not self.chamber:
@@ -197,6 +218,7 @@ class ChamberGUI(QWidget):
             response = self.chamber.ser.readline().decode(errors='ignore').strip()
             raw = response.split(' ')
             values = [float(v) for v in raw[:2]]  # T_set and T_act
+            self.update_status_light('connected')
 
             if len(values) < 2:
                 return
@@ -226,7 +248,8 @@ class ChamberGUI(QWidget):
                 self.csv_file.flush()
 
         except Exception as e:
-            print("Polling error:", e)
+            print(f"Polling error: {e}")
+            self.update_status_light('error')
 
     def schedule_turnoff_by_duration(self):
         try:
@@ -261,6 +284,7 @@ class ChamberGUI(QWidget):
 
     def closeEvent(self, event):
         self.disconnect_chamber()
+        self.update_status_light(False)
         self.stop_logging()  # Safe to call twice
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
