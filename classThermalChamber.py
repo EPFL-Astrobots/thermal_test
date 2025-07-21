@@ -46,6 +46,13 @@ class ThermalChamber:
         response = self.ser.readline().decode(errors='ignore').strip()
         print(f"Response: {repr(response)}")
 
+    def read_temperature(self):
+        self.ser.write(b'$00I\r')  # Or use appropriate command
+        response = self.ser.readline()
+        raw = response.decode(errors='ignore').strip().split(' ')
+
+        return raw
+
     def turn_off_chamber(self):
 
         """

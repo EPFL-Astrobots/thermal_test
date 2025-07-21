@@ -1,11 +1,13 @@
 import sys
 import csv
+import os
 import time
 import datetime
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QVBoxLayout,
     QHBoxLayout, QLabel, QLineEdit, QMessageBox, QComboBox, QTextEdit
 )
+from PyQt5.QtCore import QProcess
 from PyQt5.QtCore import QTimer
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -45,6 +47,8 @@ class ChamberGUI(QWidget):
         self.time_checker = QTimer()
         self.time_checker.timeout.connect(self.check_turnoff_time)
         self.time_checker.start(1000)  # check every secon
+        self.test_script_path = "caribaTesting.py"  # or full path
+        self.test_process = None
 
         self.init_ui()
 
@@ -130,6 +134,13 @@ class ChamberGUI(QWidget):
         layout.addLayout(duration_layout)
         layout.addWidget(self.timer_info_label)
 
+        # --- Run Single Test Script Button ---
+        run_once_layout = QHBoxLayout()
+        self.run_once_btn = QPushButton("Run caribaTesting.py Once")
+        self.run_once_btn.clicked.connect(self.run_test_script_once)
+        run_once_layout.addWidget(self.run_once_btn)
+        layout.addLayout(run_once_layout)
+
         
 
     def refresh_ports(self):
@@ -196,11 +207,18 @@ class ChamberGUI(QWidget):
             QMessageBox.critical(self, "Setpoint Error", str(e))
 
     def start_logging(self):
+        # Create logs directory if it doesn't exist
+        log_dir = "Chamber_logs"
+        os.makedirs(log_dir, exist_ok=True)
+
         now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.csv_filename = f"{now}_camber_logs.csv"
-        self.csv_file = open(self.csv_filename, mode='w', newline='')
+        filename = f"{now}_chamber_logs.csv"
+        log_path = os.path.join(log_dir, filename)
+
+        self.csv_file = open(log_path, mode='w', newline='')
         self.csv_writer = csv.writer(self.csv_file)
         self.csv_writer.writerow(["Wall_Timestamp", "Elapsed_Seconds", "Temp_Setpoint", "Temp_Actual"])
+        print(f"💾 Logging started: {log_path}")
 
     def stop_logging(self):
         if self.csv_file:
@@ -218,8 +236,6 @@ class ChamberGUI(QWidget):
             response = self.chamber.ser.readline().decode(errors='ignore').strip()
             raw = response.split(' ')
             values = [float(v) for v in raw[:2]]  # T_set and T_act
-            self.update_status_light('connected')
-
             if len(values) < 2:
                 return
 
@@ -250,6 +266,37 @@ class ChamberGUI(QWidget):
         except Exception as e:
             print(f"Polling error: {e}")
             self.update_status_light('error')
+
+    def run_test_script_once(self):
+        if self.test_process is not None:
+            print("⚠️ Test script is already running.")
+            return
+
+        self.test_process = QProcess(self)
+        self.test_process.setProcessChannelMode(QProcess.MergedChannels)
+
+        self.test_process.readyReadStandardOutput.connect(self.on_test_output)
+        self.test_process.finished.connect(self.on_test_script_finished)
+        self.test_process.errorOccurred.connect(self.on_test_script_error)
+
+        self.run_once_btn.setEnabled(False)
+        print(f"▶️ Launching test script: {self.test_script_path}")
+        self.test_process.start("python", [self.test_script_path])
+
+    def on_test_output(self):
+        if self.test_process:
+            output = self.test_process.readAllStandardOutput().data().decode()
+            self.log_output.append(output.strip())
+
+    def on_test_script_finished(self, exit_code, exit_status):
+        print(f"✅ Test script finished (exit code: {exit_code})")
+        self.run_once_btn.setEnabled(True)
+        self.test_process = None
+
+    def on_test_script_error(self, error):
+        print(f"❌ Test script error occurred: {error}")
+        self.run_once_btn.setEnabled(True)
+        self.test_process = None
 
     def schedule_turnoff_by_duration(self):
         try:
