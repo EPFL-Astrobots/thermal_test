@@ -19,3 +19,4 @@ Thumbs.db
 
 # Exclude all files in logs folder...
 Chamber_logs/*
+Results/*
