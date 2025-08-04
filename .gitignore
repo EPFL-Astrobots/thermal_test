@@ -1,0 +1,21 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+.env/
+
+# Qt build artifacts
+*.log
+*.qt-project
+*.pro.user
+*.qmake.stash
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Exclude all files in logs folder...
+Chamber_logs/*
