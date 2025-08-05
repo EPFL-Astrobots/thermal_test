@@ -9,14 +9,14 @@ from miscmath import fit_circle
 ## Make sure to search for: # CHANGE POSITIONER HERE! to be able to change the positioner!
 ## Make sure to search for: # CHANGE MODULE HERE! to be able to change the module!
 
-POSID = 24 # CHANGE POSITIONER HERE!
-TEMP = 20 # [°C] CHANGE TEMPERATURE HERE
+POSID = 26 # CHANGE POSITIONER HERE!
+TEMP = None # [°C] CHANGE TEMPERATURE HERE
 
 def path_to_results_dir(posID: int = None, temp: float = None):
 
     script_dir = os.path.dirname(__file__)
     # results_dir_path = os.path.join(script_dir, 'Results_examples/')
-    results_dir_path = os.path.join(script_dir, 'Results/')
+    results_dir_path = os.path.join(script_dir, 'Results/Orbray')
 
     # Creates a subfolder corresponding to the project name in Results/
     if posID is not None: 
@@ -509,87 +509,88 @@ class posResults():
 
 #%%
 # Create an empty DataFrame to store the results
-df = pd.DataFrame()
+if __name__ == "__main__":
+    df = pd.DataFrame()
 
-for filename in os.listdir(base_directory):
-    if filename.endswith(f'pos{POSID}'):
-        filepath = os.path.join(base_directory, filename)
-        
-        pos_data = posTest.loadFromFile(filepath)
-        if pos_data is None:
-            print(f"Skipping file {filename} due to loading issues.")
-            continue
-        print(f"Running getResults() for file {filename}...")
-        pos_data.getResults()
-        results = posResults(filepath)
-        file_results = results.get_results()
-        # file_results = pos_data.getResults()
-        
-        # Convert dict to DataFrame
-        file_results_df = pd.DataFrame([file_results])
-        
-        # Concatenate to df
-        df = pd.concat([df, file_results_df], ignore_index=True)
+    for filename in os.listdir(base_directory):
+        if filename.endswith(f'pos{POSID}'):
+            filepath = os.path.join(base_directory, filename)
+            
+            pos_data = posTest.loadFromFile(filepath)
+            if pos_data is None:
+                print(f"Skipping file {filename} due to loading issues.")
+                continue
+            print(f"Running getResults() for file {filename}...")
+            pos_data.getResults()
+            results = posResults(filepath)
+            file_results = results.get_results()
+            # file_results = pos_data.getResults()
+            
+            # Convert dict to DataFrame
+            file_results_df = pd.DataFrame([file_results])
+            
+            # Concatenate to df
+            df = pd.concat([df, file_results_df], ignore_index=True)
 
-#%%    
-def calculate_and_append_stats(df):
-    """
-    Calculates the mean, max, and min for each parameter in a DataFrame,
-    and appends them to the DataFrame with descriptive rows.
+    #%%    
+    def calculate_and_append_stats(df):
+        """
+        Calculates the mean, max, and min for each parameter in a DataFrame,
+        and appends them to the DataFrame with descriptive rows.
 
-    Args:
-        df (pd.DataFrame): The input DataFrame.
+        Args:
+            df (pd.DataFrame): The input DataFrame.
 
-    Returns:
-        pd.DataFrame: The DataFrame with appended mean, max, and min rows.
-    """
+        Returns:
+            pd.DataFrame: The DataFrame with appended mean, max, and min rows.
+        """
 
-    # Calculate statistics
-    mean_values = df.mean()
-    max_values = df.max()
-    min_values = df.min()
+        # Calculate statistics
+        mean_values = df.mean()
+        max_values = df.max()
+        min_values = df.min()
 
-    # Create empty rows (dtype float64)
-    empty_row_mean = pd.Series([np.nan] * len(mean_values), index=mean_values.index, dtype='float64')
-    empty_row_max = pd.Series([np.nan] * len(max_values), index=max_values.index, dtype='float64')
-    empty_row_min = pd.Series([np.nan] * len(min_values), index=min_values.index, dtype='float64')
+        # Create empty rows (dtype float64)
+        empty_row_mean = pd.Series([np.nan] * len(mean_values), index=mean_values.index, dtype='float64')
+        empty_row_max = pd.Series([np.nan] * len(max_values), index=max_values.index, dtype='float64')
+        empty_row_min = pd.Series([np.nan] * len(min_values), index=min_values.index, dtype='float64')
 
-    # Create descriptive rows (dtype object)
-    desc_row_mean = pd.Series(['Mean Value'] * len(mean_values), index=mean_values.index, dtype='object')
-    desc_row_max = pd.Series(['Max Value'] * len(max_values), index=max_values.index, dtype='object')
-    desc_row_min = pd.Series(['Min Value'] * len(min_values), index=min_values.index, dtype='object')
+        # Create descriptive rows (dtype object)
+        desc_row_mean = pd.Series(['Mean Value'] * len(mean_values), index=mean_values.index, dtype='object')
+        desc_row_max = pd.Series(['Max Value'] * len(max_values), index=max_values.index, dtype='object')
+        desc_row_min = pd.Series(['Min Value'] * len(min_values), index=min_values.index, dtype='object')
 
-    # Combine all rows using pd.concat
-    df = pd.concat([
-        df,
-        pd.DataFrame([empty_row_mean]),
-        pd.DataFrame([desc_row_mean]),
-        pd.DataFrame([mean_values]),
-        pd.DataFrame([empty_row_max]),
-        pd.DataFrame([desc_row_max]),
-        pd.DataFrame([max_values]),
-        pd.DataFrame([empty_row_min]),
-        pd.DataFrame([desc_row_min]),
-        pd.DataFrame([min_values])
-    ], ignore_index=True)
+        # Combine all rows using pd.concat
+        df = pd.concat([
+            df,
+            pd.DataFrame([empty_row_mean]),
+            pd.DataFrame([desc_row_mean]),
+            pd.DataFrame([mean_values]),
+            pd.DataFrame([empty_row_max]),
+            pd.DataFrame([desc_row_max]),
+            pd.DataFrame([max_values]),
+            pd.DataFrame([empty_row_min]),
+            pd.DataFrame([desc_row_min]),
+            pd.DataFrame([min_values])
+        ], ignore_index=True)
 
-    return df
-# Calculate the mean for each parameter and append it to the DataFrame
-#mean_values = df.mean()
-#mean_values.name = 'Mean'
+        return df
+    # Calculate the mean for each parameter and append it to the DataFrame
+    #mean_values = df.mean()
+    #mean_values.name = 'Mean'
 
-# Create an empty row with NaN values
-#empty_row = pd.Series([np.nan] * len(mean_values), index=mean_values.index)
-#empty_row2 = pd.Series(['Mean Value'] * len(mean_values), index=mean_values.index)
+    # Create an empty row with NaN values
+    #empty_row = pd.Series([np.nan] * len(mean_values), index=mean_values.index)
+    #empty_row2 = pd.Series(['Mean Value'] * len(mean_values), index=mean_values.index)
 
-# Append the empty row and then the mean values
-#df = df.append(empty_row, ignore_index=True)
-#df = df.append(empty_row2, ignore_index=True)
-#df = df.append(mean_values, ignore_index=True)
+    # Append the empty row and then the mean values
+    #df = df.append(empty_row, ignore_index=True)
+    #df = df.append(empty_row2, ignore_index=True)
+    #df = df.append(mean_values, ignore_index=True)
 
-# Save the data to an Excel file
-output_path = os.path.join(base_directory2, f'results_pos{POSID}.xlsx')
-df = calculate_and_append_stats(df)
-df.to_excel(output_path, index=False)
+    # Save the data to an Excel file
+    output_path = os.path.join(base_directory2, f'results_pos{POSID}.xlsx')
+    df = calculate_and_append_stats(df)
+    df.to_excel(output_path, index=False)
 
-print(f"Data saved to {output_path}")
+    print(f"Data saved to {output_path}")
