@@ -2,6 +2,18 @@
 import numpy as np
 import colorama
 
+MANUFACTURER = 'mps_swapped_motors'  # Because of the motor swap done at MPS, we have to manually compensate for the different gearbox ratio in the
+#firmware that is not modifiable. 
+ORBRAY_GEAR_RATIO 							= (46/14+1)**4 		# Gear ratio of the Orbray motors
+SDSS_GEAR_RATIO 							= 1024 # Gear ratio of the SDSS motors
+MAXON_GEAR_RATIO 							= 280 # Gear ratio of the Maxon motors
+PROTO_21_ORBRAY_ADJUSTED					= -1 # factor adjustment because of the cabling of the 21 proto of Orbray
+
+SDSS_TO_ORBRAY_GEAR_RATIO					= ORBRAY_GEAR_RATIO / SDSS_GEAR_RATIO
+MAXON_TO_ORBRAY_GEAR_RATIO					= ORBRAY_GEAR_RATIO / MAXON_GEAR_RATIO 
+ORBRAY_TO_MAXON_GEAR_RATIO					= MAXON_GEAR_RATIO / ORBRAY_GEAR_RATIO
+
+
 GUI_LOCK_CONFIG								= False
 GUI_TB1_FILENAME 							= 'Wall-e'
 GUI_TB2_FILENAME 							= 'Eve'
