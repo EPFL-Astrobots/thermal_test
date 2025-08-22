@@ -10,6 +10,8 @@ import zlib
 import os
 import logging
 import time
+from utils import manufacturer_adjust_relative, manufacturer_adjust_absolute, manufacturer_adjust_set_position
+
 
 log_positioner = logging.getLogger(__name__)
 log_positioner.setLevel(logging.DEBUG)
@@ -259,6 +261,7 @@ class Positioner(object):
             log_positioner.error('Error with command get_position')
             return None
 
+    @manufacturer_adjust_set_position
     def set_position(self, alpha, beta):
         """sets the actual position of the actuactors
 
@@ -309,6 +312,7 @@ class Positioner(object):
         else:
             log_positioner.error('Error with firmware upgrade command')
 
+    @manufacturer_adjust_absolute
     def goto_absolute(self, alpha, beta):
         """moves the positioner to an absolute position
 
@@ -342,6 +346,7 @@ class Positioner(object):
         else:
             log_positioner.error('Error with command goto absolute')
 
+    @manufacturer_adjust_relative
     def goto_relative(self, delta_alpha, delta_beta):
         """moves the positioner to an relative position
 
