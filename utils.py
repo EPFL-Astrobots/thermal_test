@@ -27,12 +27,12 @@ def manufacturer_adjust_set_position(fn):
         elif manufacturer and manufacturer.lower() == "mps_swapped_motors":
             if self._canid == 23:
                 alpha_adjusted = alpha * DEFINES.ORBRAY_TO_MAXON_GEAR_RATIO
-                beta_adjusted = beta * DEFINES.ORBRAY_TO_MAXON_GEAR_RATIO
+                beta_adjusted = beta # no motor swap for beta
                 log.debug(f"Set alpha from {alpha} relative adjusted to {alpha_adjusted}, beta from {beta} relative adjusted to {beta_adjusted}")
                 return fn(self, alpha_adjusted, beta_adjusted)
             elif self._canid == 25 or self._canid == 26:
                 alpha_adjusted = alpha * DEFINES.MAXON_TO_ORBRAY_GEAR_RATIO
-                beta_adjusted = beta * DEFINES.MAXON_TO_ORBRAY_GEAR_RATIO
+                beta_adjusted = beta
                 log.debug(f"Set alpha from {alpha} relative adjusted to {alpha_adjusted}, beta from {beta} relative adjusted to {beta_adjusted}")
                 return fn(self, alpha_adjusted, beta_adjusted)     
         else:
@@ -58,12 +58,12 @@ def manufacturer_adjust_relative(fn):
             #WARNING: workaround that supposes that posid = can id
             if self._canid == 23:
                 alpha_adjusted = alpha * DEFINES.ORBRAY_TO_MAXON_GEAR_RATIO
-                beta_adjusted = beta * DEFINES.ORBRAY_TO_MAXON_GEAR_RATIO
+                beta_adjusted = beta
                 log.debug(f"Set alpha from {alpha} relative adjusted to {alpha_adjusted}, beta from {beta} relative adjusted to {beta_adjusted}")
                 return fn(self, alpha_adjusted, beta_adjusted)
             elif self._canid == 25 or self._canid == 26:
                 alpha_adjusted = alpha * DEFINES.MAXON_TO_ORBRAY_GEAR_RATIO
-                beta_adjusted = beta * DEFINES.MAXON_TO_ORBRAY_GEAR_RATIO
+                beta_adjusted = beta
                 log.debug(f"Set alpha from {alpha} relative adjusted to {alpha_adjusted}, beta from {beta} relative adjusted to {beta_adjusted}")
                 return fn(self, alpha_adjusted, beta_adjusted)
         else:
@@ -116,12 +116,12 @@ def manufacturer_adjust_absolute(fn):
             #WARNING: workaround that supposes that posid = can id
             if self._canid == 23:
                 alpha_adjusted = alpha * DEFINES.ORBRAY_TO_MAXON_GEAR_RATIO
-                beta_adjusted = beta * DEFINES.ORBRAY_TO_MAXON_GEAR_RATIO
+                beta_adjusted = beta
                 log.debug(f"Set alpha from {alpha} relative adjusted to {alpha_adjusted}, beta from {beta} relative adjusted to {beta_adjusted}")
                 return fn(self, alpha_adjusted, beta_adjusted)
             elif self._canid == 25 or self._canid == 26:
                 alpha_adjusted = alpha * DEFINES.MAXON_TO_ORBRAY_GEAR_RATIO
-                beta_adjusted = beta * DEFINES.MAXON_TO_ORBRAY_GEAR_RATIO
+                beta_adjusted = beta
                 log.debug(f"Set alpha from {alpha} relative adjusted to {alpha_adjusted}, beta from {beta} relative adjusted to {beta_adjusted}")
                 return fn(self, alpha_adjusted, beta_adjusted)
         else:
