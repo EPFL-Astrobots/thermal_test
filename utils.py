@@ -43,7 +43,9 @@ def manufacturer_adjust_set_position(fn):
                 alpha_adjusted = alpha * DEFINES.MAXON_TO_ORBRAY_GEAR_RATIO
                 beta_adjusted = beta
                 log.debug(f"Set alpha from {alpha} relative adjusted to {alpha_adjusted}, beta from {beta} relative adjusted to {beta_adjusted}")
-                return fn(self, alpha_adjusted, beta_adjusted)     
+                return fn(self, alpha_adjusted, beta_adjusted)
+            else:
+                return fn(self, alpha, beta)    
         else:
             return fn(self,alpha, beta)
     return wrapper
@@ -75,6 +77,8 @@ def manufacturer_adjust_relative(fn):
                 beta_adjusted = beta
                 log.debug(f"Set alpha from {alpha} relative adjusted to {alpha_adjusted}, beta from {beta} relative adjusted to {beta_adjusted}")
                 return fn(self, alpha_adjusted, beta_adjusted)
+            else:
+                return fn(self, alpha, beta)
         else:
             return fn(self,alpha, beta)
     return wrapper
@@ -133,6 +137,8 @@ def manufacturer_adjust_absolute(fn):
                 beta_adjusted = beta
                 log.debug(f"Set alpha from {alpha} relative adjusted to {alpha_adjusted}, beta from {beta} relative adjusted to {beta_adjusted}")
                 return fn(self, alpha_adjusted, beta_adjusted)
+            else:
+                return fn(self, alpha, beta, *args, **kwargs)
         else:
             return fn(self, alpha, beta, *args, **kwargs)
     return wrapper
