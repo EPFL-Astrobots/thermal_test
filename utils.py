@@ -7,7 +7,16 @@ from functools import wraps
 import logging
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
+#TEMPORARY FIX
+#later merge cleanly with main logging from the testing repo
+if not log.handlers:  # avoid duplicate handlers on reload
+    _h = logging.StreamHandler()
+    _h.setLevel(logging.DEBUG)
+    _h.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s: %(message)s"))
+    log.addHandler(_h)
+    log.propagate = False  # don’t double-log to root if it’s configured elsewhere
 
 def manufacturer_adjust_set_position(fn):
     """

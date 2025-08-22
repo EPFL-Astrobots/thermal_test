@@ -6,6 +6,7 @@ import pickle
 from datetime import datetime
 import matplotlib.pyplot as plt
 from miscmath import fit_circle
+import DEFINES
 #from docx import Document
 
 
@@ -73,8 +74,11 @@ class posTest():
         results_dir_path = os.path.join(script_dir, 'Results/')
 
         # Creates a subfolder corresponding to the project name in Results/
-        if posID is not None: 
-            results_dir_path = os.path.join(results_dir_path, f'Positioner {posID}' + '/')
+        if posID is not None:
+            if DEFINES.MANUFACTURER.lower() == 'mps_swapped_motors':
+                results_dir_path = os.path.join(results_dir_path, f'Positioner_swapped {posID}' + '/')
+            else:
+                results_dir_path = os.path.join(results_dir_path, f'Positioner {posID}' + '/')
 
         if temp is not None:
             results_dir_path = os.path.join(results_dir_path, f'{temp} degrees' + '/')
